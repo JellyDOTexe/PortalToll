@@ -14,7 +14,7 @@ namespace PortalToll
 
     // Portals normally refuse a player who carries metal (any item the game marks as not teleportable).
     // This plugin lets the player through and has the portal destroy a share of those items instead.
-    [BepInPlugin(Guid, "Portal Toll", "1.2.1")]
+    [BepInPlugin(Guid, "Portal Toll", "1.2.2")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "jellydotexe.portaltoll";

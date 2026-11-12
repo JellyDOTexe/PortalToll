@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.2
+- New icon. No gameplay changes.
+
 ## 1.2.1
 - New icon. No gameplay changes.
 

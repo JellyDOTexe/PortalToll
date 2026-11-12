@@ -14,7 +14,7 @@ namespace PortalToll
 
     // Portals normally refuse a player who carries metal (any item the game marks as not teleportable).
     // This plugin lets the player through and has the portal destroy a share of those items instead.
-    [BepInPlugin(Guid, "Portal Toll", "1.2.2")]
+    [BepInPlugin(Guid, "Portal Toll", "1.3.0")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "jellydotexe.portaltoll";
@@ -40,6 +40,10 @@ namespace PortalToll
         // One setting per restricted item, created once the game's item list is loaded: prefab name (lower case) -> entry.
         private static readonly Dictionary<string, ConfigEntry<float>> itemEntries = new Dictionary<string, ConfigEntry<float>>();
         private const string ItemSection = "5 - Items";
+
+        // One setting per portal type, created once the game's prefab list is loaded: prefab name (lower case) -> entry.
+        private static readonly Dictionary<string, ConfigEntry<float>> portalEntries = new Dictionary<string, ConfigEntry<float>>();
+        private const string PortalSection = "6 - Portals";
         private static Plugin instance;
 
         private void Awake()
@@ -69,7 +73,8 @@ namespace PortalToll
                 "A value set in the '" + ItemSection + "' section wins over this list.");
 
             TollStonePortals = Config.Bind("3 - Free portals", "TollStonePortals", true,
-                "Charge the toll at stone portals, which let everything through in the unmodded game.");
+                "Charge the toll at stone portals, which let everything through in the unmodded game. " +
+                "When off, portals of that kind are free whatever the '" + PortalSection + "' section says.");
             TollTeleportAllWorlds = Config.Bind("3 - Free portals", "TollTeleportAllWorlds", true,
                 "Charge the toll in worlds with the 'teleport all' modifier, where the unmodded game lets everything through.");
 
@@ -143,6 +148,72 @@ namespace PortalToll
             }
         }
 
+        // Adds a setting for every portal type in the game's prefab list, including portals from other mods.
+        // Safe to call repeatedly; portals that already have a setting are skipped.
+        internal static void RegisterPortalSettings()
+        {
+            if (instance == null || ZNetScene.instance == null) return;
+            ConfigFile config = instance.Config;
+            bool saveOnSet = config.SaveOnConfigSet;
+            config.SaveOnConfigSet = false;
+            int added = 0;
+            try
+            {
+                foreach (GameObject prefab in ZNetScene.instance.m_prefabs)
+                {
+                    if (prefab == null || prefab.GetComponent<TeleportWorld>() == null) continue;
+                    if (BindPortal(config, prefab.name)) added++;
+                }
+            }
+            catch (Exception e)
+            {
+                Log.LogWarning("Could not create portal settings: " + e);
+            }
+            finally
+            {
+                config.SaveOnConfigSet = saveOnSet;
+            }
+            if (added > 0)
+            {
+                config.Save();
+                Log.LogInfo("Added settings for " + added + " portal types");
+            }
+        }
+
+        private static bool BindPortal(ConfigFile config, string prefabName)
+        {
+            string key = prefabName.ToLowerInvariant();
+            if (key.Length == 0 || portalEntries.ContainsKey(key)) return false;
+            portalEntries[key] = config.Bind(PortalSection, prefabName, 1f,
+                new ConfigDescription("Toll multiplier at this kind of portal. 1 = normal toll, 0.5 = half, 0 = free, 2 = double. " +
+                    "It scales every item's rate, and a rate can never go above 1 (everything).",
+                    new AcceptableValueRange<float>(0f, 10f)));
+            return true;
+        }
+
+        // Prefab name of a placed portal: the object's name without Unity's "(Clone)" suffix.
+        internal static string PortalName(TeleportWorld portal)
+        {
+            string name = portal.gameObject.name;
+            int cut = name.IndexOf("(Clone)", StringComparison.Ordinal);
+            if (cut >= 0) name = name.Substring(0, cut);
+            return name.Trim();
+        }
+
+        // Toll multiplier for this portal. A portal type seen for the first time gets its setting here.
+        internal static float MultiplierFor(TeleportWorld portal)
+        {
+            if (portal == null) return 1f;
+            string name = PortalName(portal);
+            ConfigEntry<float> entry;
+            if (!portalEntries.TryGetValue(name.ToLowerInvariant(), out entry))
+            {
+                if (instance == null || !BindPortal(instance.Config, name)) return 1f;
+                entry = portalEntries[name.ToLowerInvariant()];
+            }
+            return Mathf.Max(0f, entry.Value);
+        }
+
         // Loss fraction for this item, or 0 when it is not tolled.
         internal static float FractionFor(ItemDrop.ItemData item)
         {
@@ -182,6 +253,8 @@ namespace PortalToll
         {
             if (!TollStonePortals.Value && portal != null && portal.m_allowAllItems) return;
             if (!TollTeleportAllWorlds.Value && ZoneSystem.instance != null && ZoneSystem.instance.GetGlobalKey(GlobalKeys.TeleportAll)) return;
+            float multiplier = MultiplierFor(portal);
+            if (multiplier <= 0f) return;
 
             Inventory inventory = player.GetInventory();
             var totals = new Dictionary<string, int>();
@@ -195,7 +268,7 @@ namespace PortalToll
                 if (!totals.ContainsKey(name))
                 {
                     totals[name] = 0;
-                    fractions[name] = fraction;
+                    fractions[name] = Mathf.Clamp01(fraction * multiplier);
                     order.Add(name);
                 }
                 totals[name] += item.m_stack;
@@ -257,7 +330,17 @@ namespace PortalToll
 
         [HarmonyPatch(typeof(Player), nameof(Player.OnSpawned))]
         [HarmonyPostfix]
-        private static void AfterPlayerSpawned() { Plugin.RegisterItemSettings(); }
+        private static void AfterPlayerSpawned()
+        {
+            Plugin.RegisterItemSettings();
+            Plugin.RegisterPortalSettings();
+        }
+
+        // Other mods add their portals to the prefab list around this point; the spawn hook above catches late ones.
+        [HarmonyPatch(typeof(ZNetScene), "Awake")]
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.Last)]
+        private static void AfterZNetSceneAwake() { Plugin.RegisterPortalSettings(); }
 
         [HarmonyPatch(typeof(TeleportWorld), nameof(TeleportWorld.Teleport))]
         [HarmonyPrefix]

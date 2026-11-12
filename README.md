@@ -35,7 +35,7 @@ Stone portals and "teleport all" worlds
 
 The game already lets metal through in these cases. By default the toll still applies.
 
-- `TollStonePortals` - turn off to make stone portals free.
+- `TollStonePortals` - turn off to make stone portals free. This wins over the per portal setting below.
 - `TollTeleportAllWorlds` - turn off to make worlds with the teleport all modifier free.
 
 Message
@@ -46,6 +46,12 @@ Message
 Per item
 
 After you've loaded into the game once, the config gets a `5 - Items` section with an entry for every restricted item (`Iron`, `CopperOre`, `DragonEgg`...), including ones from other mods. -1 means "use LossFraction", 0 means free, anything else is that item's own rate. These win over `ItemOverrides`.
+
+Per portal
+
+You also get a `6 - Portals` section with an entry for every kind of portal in the game (`portal_wood`, `portal_stone`, plus any that other mods add). Each one is a multiplier on the toll at that kind of portal. 1 is the normal toll, 0.5 is half, 0 makes that portal free, 2 is double. It stacks with the item rates, so if iron is set to 0.5 and a portal is set to 0.5 you lose a quarter of your iron there. You can never lose more than everything.
+
+This is per kind of portal, not per portal you've placed. It only sees modded portals that are built on the game's own portal, which most are.
 
 ## Install
 

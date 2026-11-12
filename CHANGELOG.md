@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.3.0
+- New `6 - Portals` section with a toll multiplier for every kind of portal, including portals added by other mods. Created when the game loads.
+
 ## 1.2.2
 - New icon. No gameplay changes.
 

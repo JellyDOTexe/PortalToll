@@ -44,3 +44,7 @@ dotnet build -c Release -p:ValheimDir=/path/to/Valheim
 ```
 
 `ValheimDir` is your Valheim install folder with BepInEx in it.
+
+## License
+
+MIT. Use it, change it and share it freely. See [LICENSE](LICENSE).

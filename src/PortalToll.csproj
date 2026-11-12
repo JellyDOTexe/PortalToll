@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Version>1.0.0</Version>
+    <AssemblyName>PortalToll</AssemblyName>
+    <RootNamespace>PortalToll</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <!-- Point ValheimDir at your Valheim install (with BepInEx) to build. -->
+    <ValheimDir Condition="'$(ValheimDir)' == ''">$(HOME)/.local/share/Steam/steamapps/common/Valheim</ValheimDir>
+    <Managed>$(ValheimDir)/valheim_Data/Managed</Managed>
+    <BepCore>$(ValheimDir)/BepInEx/core</BepCore>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(BepCore)/BepInEx.dll" Private="false" />
+    <Reference Include="$(BepCore)/0Harmony.dll" Private="false" />
+    <Reference Include="$(Managed)/assembly_valheim.dll" Private="false" />
+    <Reference Include="$(Managed)/assembly_guiutils.dll" Private="false" />
+    <Reference Include="$(Managed)/UnityEngine.dll" Private="false" />
+    <Reference Include="$(Managed)/UnityEngine.CoreModule.dll" Private="false" />
+  </ItemGroup>
+</Project>

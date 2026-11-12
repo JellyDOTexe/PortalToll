@@ -1,0 +1,9 @@
+{
+    "name": "PortalToll",
+    "version_number": "1.0.0",
+    "website_url": "https://github.com/JellyDOTexe/PortalToll",
+    "description": "Portals let you carry metal through, but destroy half of it on every trip.",
+    "dependencies": [
+        "denikson-BepInExPack_Valheim-5.4.2360"
+    ]
+}

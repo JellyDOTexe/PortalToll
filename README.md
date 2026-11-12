@@ -5,7 +5,7 @@ A Valheim mod. Portals let you carry metal through, but the portal destroys half
 ## What it does
 
 - In the unmodded game a portal refuses you while you carry ore, metal bars, scrap or other restricted items. With this mod the portal lets you through.
-- On each trip the portal destroys half of every restricted item type you carry. The count is taken across your whole inventory and the loss is rounded up: 20 iron leaves 10, 5 iron leaves 2, and a single bar is lost.
+- With the default settings, each trip destroys half of every restricted item type you carry. The count is taken across your whole inventory and the loss is rounded up: 20 iron leaves 10, 5 iron leaves 2, and a single bar is lost.
 - A message on screen tells you what was taken, for example "The portal consumed 10 Iron, 3 Copper ore".
 - "Restricted" means every item the game marks as not teleportable. This covers dragon eggs and similar items, and metals added by other mods, as long as those mods mark them the same way.
 

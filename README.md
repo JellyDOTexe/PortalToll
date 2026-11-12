@@ -1,86 +1,64 @@
 # Portal Toll
 
-A Valheim mod. Portals let you carry metal through, but the portal destroys half of it on every trip.
+Lets you take metal through portals, but the portal eats half of it.
 
-## What it does
+I always thought the "no metal through portals" rule was a bit too all-or-nothing. With this you can skip the boat trip if you're willing to pay for it. Walk in with 20 iron, walk out with 10.
 
-- In the unmodded game a portal refuses you while you carry ore, metal bars, scrap or other restricted items. With this mod the portal lets you through.
-- With the default settings, each trip destroys half of every restricted item type you carry. The count is taken across your whole inventory and the loss is rounded up: 20 iron leaves 10, 5 iron leaves 2, and a single bar is lost.
-- A message on screen tells you what was taken, for example "The portal consumed 10 Iron, 3 Copper ore".
-- "Restricted" means every item the game marks as not teleportable. This covers dragon eggs and similar items, and metals added by other mods, as long as those mods mark them the same way.
+## How it works
 
-## Settings
+- Portals no longer refuse you when you're carrying ore, bars, scrap and so on.
+- Every trip costs you half of each of those items. It counts your whole inventory, not each stack, and rounds against you: 5 iron becomes 2, and a single bar is just gone. So no, you can't sneak them through one at a time.
+- You get a message telling you what you lost.
+- It works on anything the game flags as non-teleportable, so dragon eggs count, and so do metals from other mods as long as they use the same flag.
 
-The config file is `BepInEx/config/jellydotexe.portaltoll.cfg`. It is created the first time the game starts with the mod. Changes apply to the next portal trip; no restart is needed if you edit them with an in-game config manager.
+Everything above is the default. Pretty much all of it can be changed.
 
-**General**
+## Config
 
-| Setting | Default | Meaning |
-| --- | --- | --- |
-| `Enabled` | `true` | Master switch. When off, portals behave as in the unmodded game. |
-| `LiftPortalBlock` | `true` | Lets players carrying restricted items use portals. When off, portals still refuse them, and the toll only applies where the game lets items through. |
+`BepInEx/config/jellydotexe.portaltoll.cfg`, created on first launch. Changes apply on your next portal trip.
 
-**Toll**
+General
 
-| Setting | Default | Meaning |
-| --- | --- | --- |
-| `LossFraction` | `0.5` | Share of each restricted item type destroyed per trip. 0 is nothing, 0.5 is half, 1 is everything. |
-| `Rounding` | `Up` | What happens when the loss is not a whole number, such as half of 5. `Up` loses 3, `Down` loses 2, `Nearest` picks the closest whole number, and `Random` loses 2 or 3 by chance so the average matches `LossFraction`. |
-| `FreeAllowance` | `0` | This many items of each type pass untouched. The toll is taken only from the rest. |
-| `ItemOverrides` | empty | Loss fraction for single items, as `Name:Fraction` pairs separated by commas. Example: `IronScrap:0.25, DragonEgg:0, BlackMetal:1`. Use prefab names, the ones the spawn command uses. A fraction of 0 makes an item toll free. Items the game normally lets through can be listed too, and are then tolled. |
+- `Enabled` - turn the whole mod on or off.
+- `LiftPortalBlock` - if you turn this off, portals block metal like normal and the toll only applies where the game already lets things through (see below).
 
-**Items**
+Toll
 
-Once the game has loaded its item list, the config file gains a `5 - Items` section with one setting per restricted item, named by prefab (`Iron`, `CopperOre`, `DragonEgg` and so on). Restricted items from other mods get one too. Start the game once to see them.
+- `LossFraction` (0.5) - how much gets destroyed. 0.25 is a quarter, 1 is everything.
+- `Rounding` (Up) - what to do with uneven numbers. `Up`, `Down`, `Nearest`, or `Random`. Random means half of 5 costs you 2 or 3 by coin flip.
+- `FreeAllowance` (0) - how many of each item you can carry for free before the toll kicks in.
+- `ItemOverrides` - custom rates for specific items, like `IronScrap:0.25, DragonEgg:0, BlackMetal:1`. Uses prefab names. You can also list items that normally teleport fine if you want them taxed too.
 
-| Value | Meaning |
-| --- | --- |
-| `-1` (default) | Use `LossFraction`. |
-| `0` | This item is toll free. |
-| above `0` up to `1` | Share of this item destroyed per trip. |
+Stone portals and "teleport all" worlds
 
-A value set here wins over `ItemOverrides`. Use `ItemOverrides` for items the game normally lets through, which have no setting of their own.
+The game already lets metal through in these cases. By default the toll still applies.
 
-**Free portals**
+- `TollStonePortals` - turn off to make stone portals free.
+- `TollTeleportAllWorlds` - turn off to make worlds with the teleport all modifier free.
 
-| Setting | Default | Meaning |
-| --- | --- | --- |
-| `TollStonePortals` | `true` | Charge the toll at stone portals, which let everything through in the unmodded game. |
-| `TollTeleportAllWorlds` | `true` | Charge the toll in worlds with the "teleport all" modifier. |
+Message
 
-**Message**
+- `Message` - `Center`, `TopLeft` or `Off`.
+- `MessageText` - the text itself. `{0}` is where the item list goes.
 
-| Setting | Default | Meaning |
-| --- | --- | --- |
-| `Message` | `Center` | Where the message appears: `Center`, `TopLeft`, or `Off`. |
-| `MessageText` | `The portal consumed {0}` | The message text. `{0}` is replaced by the list of lost items. |
+Per item
+
+After you've loaded into the game once, the config gets a `5 - Items` section with an entry for every restricted item (`Iron`, `CopperOre`, `DragonEgg`...), including ones from other mods. -1 means "use LossFraction", 0 means free, anything else is that item's own rate. These win over `ItemOverrides`.
 
 ## Install
 
-Needs [BepInExPack Valheim](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/).
-
-1. Download `PortalToll-1.2.0.zip` from the [Releases](https://github.com/JellyDOTexe/PortalToll/releases) page.
-2. Copy `PortalToll.dll` into `BepInEx/plugins`. Mod managers such as r2modman can import the zip as a local mod.
+Use a mod manager, or drop `PortalToll.dll` into `BepInEx/plugins`. Needs BepInEx, nothing else.
 
 ## Multiplayer
 
-The mod runs on each player's game, not on the server. Every player who should pay the toll needs it installed. A player without it is blocked by portals as usual.
+It's client side. Anyone who has it pays the toll, anyone who doesn't gets blocked by portals like normal. The server doesn't need it and can't force settings on players.
 
-## Limits
+## Known issues
 
-- Only your own inventory is counted. Items inside containers added by other mods, such as backpacks, are not.
-- Other mods that change the portal metal rule may conflict.
-- The mod was compiled and checked against Valheim's code, but not yet tested in a running game. Please open an issue if something is off.
+- Only looks at your own inventory. Stuff inside modded backpacks isn't counted.
+- Will probably fight with other mods that change the portal metal rule.
+- This is a new mod and hasn't had much testing yet. If something's broken, open an issue on [GitHub](https://github.com/JellyDOTexe/PortalToll/issues).
 
-## Build from source
+## Source
 
-```
-cd src
-dotnet build -c Release -p:ValheimDir=/path/to/Valheim
-```
-
-`ValheimDir` is your Valheim install folder with BepInEx in it.
-
-## License
-
-MIT. Use it, change it and share it freely. See [LICENSE](LICENSE).
+[github.com/JellyDOTexe/PortalToll](https://github.com/JellyDOTexe/PortalToll), MIT licensed. To build: `dotnet build -c Release -p:ValheimDir=/path/to/Valheim` in `src`.

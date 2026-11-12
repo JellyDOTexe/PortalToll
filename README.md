@@ -4,6 +4,8 @@ Lets you take metal through portals, but the portal eats half of it.
 
 I always thought the "no metal through portals" rule was a bit too all-or-nothing. With this you can skip the boat trip if you're willing to pay for it. Walk in with 20 iron, walk out with 10.
 
+**Heads up:** this mod was made with Claude Code, Anthropic's AI coding tool.
+
 ## How it works
 
 - Portals no longer refuse you when you're carrying ore, bars, scrap and so on.

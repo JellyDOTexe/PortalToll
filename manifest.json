@@ -1,6 +1,6 @@
 {
     "name": "PortalToll",
-    "version_number": "1.2.0",
+    "version_number": "1.2.1",
     "website_url": "https://github.com/JellyDOTexe/PortalToll",
     "description": "Take metal through portals, but lose half of it every trip. Configurable.",
     "dependencies": [

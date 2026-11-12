@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.2.1
+- New icon. No gameplay changes.
+
 ## 1.2.0
 - Every restricted item now has its own setting in a new `5 - Items` section, created when the game loads its items.
 

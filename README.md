@@ -29,6 +29,18 @@ The config file is `BepInEx/config/jellydotexe.portaltoll.cfg`. It is created th
 | `FreeAllowance` | `0` | This many items of each type pass untouched. The toll is taken only from the rest. |
 | `ItemOverrides` | empty | Loss fraction for single items, as `Name:Fraction` pairs separated by commas. Example: `IronScrap:0.25, DragonEgg:0, BlackMetal:1`. Use prefab names, the ones the spawn command uses. A fraction of 0 makes an item toll free. Items the game normally lets through can be listed too, and are then tolled. |
 
+**Items**
+
+Once the game has loaded its item list, the config file gains a `5 - Items` section with one setting per restricted item, named by prefab (`Iron`, `CopperOre`, `DragonEgg` and so on). Restricted items from other mods get one too. Start the game once to see them.
+
+| Value | Meaning |
+| --- | --- |
+| `-1` (default) | Use `LossFraction`. |
+| `0` | This item is toll free. |
+| above `0` up to `1` | Share of this item destroyed per trip. |
+
+A value set here wins over `ItemOverrides`. Use `ItemOverrides` for items the game normally lets through, which have no setting of their own.
+
 **Free portals**
 
 | Setting | Default | Meaning |
@@ -47,7 +59,7 @@ The config file is `BepInEx/config/jellydotexe.portaltoll.cfg`. It is created th
 
 Needs [BepInExPack Valheim](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/).
 
-1. Download `PortalToll-1.1.0.zip` from the [Releases](https://github.com/JellyDOTexe/PortalToll/releases) page.
+1. Download `PortalToll-1.2.0.zip` from the [Releases](https://github.com/JellyDOTexe/PortalToll/releases) page.
 2. Copy `PortalToll.dll` into `BepInEx/plugins`. Mod managers such as r2modman can import the zip as a local mod.
 
 ## Multiplayer

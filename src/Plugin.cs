@@ -14,7 +14,7 @@ namespace PortalToll
 
     // Portals normally refuse a player who carries metal (any item the game marks as not teleportable).
     // This plugin lets the player through and has the portal destroy a share of those items instead.
-    [BepInPlugin(Guid, "Portal Toll", "1.1.0")]
+    [BepInPlugin(Guid, "Portal Toll", "1.2.0")]
     public class Plugin : BaseUnityPlugin
     {
         public const string Guid = "jellydotexe.portaltoll";
@@ -37,9 +37,15 @@ namespace PortalToll
         // Parsed ItemOverrides: item name (lower case) -> loss fraction.
         private static Dictionary<string, float> overrides = new Dictionary<string, float>();
 
+        // One setting per restricted item, created once the game's item list is loaded: prefab name (lower case) -> entry.
+        private static readonly Dictionary<string, ConfigEntry<float>> itemEntries = new Dictionary<string, ConfigEntry<float>>();
+        private const string ItemSection = "5 - Items";
+        private static Plugin instance;
+
         private void Awake()
         {
             Log = Logger;
+            instance = this;
             Enabled = Config.Bind("1 - General", "Enabled", true,
                 "Master switch. When off, portals behave as in the unmodded game.");
             LiftPortalBlock = Config.Bind("1 - General", "LiftPortalBlock", true,
@@ -59,7 +65,8 @@ namespace PortalToll
             ItemOverrides = Config.Bind("2 - Toll", "ItemOverrides", "",
                 "Loss fraction for single items, as a comma separated list of Name:Fraction. " +
                 "Example: IronScrap:0.25, DragonEgg:0, BlackMetal:1. Use prefab names (the names the spawn command uses). " +
-                "0 makes an item toll free. Items the game normally lets through can be listed too, and are then tolled.");
+                "0 makes an item toll free. Items the game normally lets through can be listed too, and are then tolled. " +
+                "A value set in the '" + ItemSection + "' section wins over this list.");
 
             TollStonePortals = Config.Bind("3 - Free portals", "TollStonePortals", true,
                 "Charge the toll at stone portals, which let everything through in the unmodded game.");
@@ -94,10 +101,55 @@ namespace PortalToll
             overrides = parsed;
         }
 
+        // Adds a setting for every restricted item in the game's item list, including items from other mods.
+        // Safe to call repeatedly; items that already have a setting are skipped.
+        internal static void RegisterItemSettings()
+        {
+            if (instance == null || ObjectDB.instance == null) return;
+            ConfigFile config = instance.Config;
+            bool saveOnSet = config.SaveOnConfigSet;
+            config.SaveOnConfigSet = false;
+            int added = 0;
+            try
+            {
+                foreach (GameObject prefab in ObjectDB.instance.m_items)
+                {
+                    if (prefab == null) continue;
+                    ItemDrop drop = prefab.GetComponent<ItemDrop>();
+                    if (drop == null || drop.m_itemData == null || drop.m_itemData.m_shared == null) continue;
+                    ItemDrop.ItemData.SharedData shared = drop.m_itemData.m_shared;
+                    if (shared.m_teleportable || shared.m_toolTier >= 1000) continue;
+                    string key = prefab.name.ToLowerInvariant();
+                    if (itemEntries.ContainsKey(key)) continue;
+                    string shown = Localization.instance != null ? Localization.instance.Localize(shared.m_name) : shared.m_name;
+                    itemEntries[key] = config.Bind(ItemSection, prefab.name, -1f,
+                        new ConfigDescription(shown + ": share destroyed per portal trip. -1 = use LossFraction, 0 = toll free, 1 = everything.",
+                            new AcceptableValueRange<float>(-1f, 1f)));
+                    added++;
+                }
+            }
+            catch (Exception e)
+            {
+                Log.LogWarning("Could not create item settings: " + e);
+            }
+            finally
+            {
+                config.SaveOnConfigSet = saveOnSet;
+            }
+            if (added > 0)
+            {
+                config.Save();
+                Log.LogInfo("Added settings for " + added + " restricted items");
+            }
+        }
+
         // Loss fraction for this item, or 0 when it is not tolled.
         internal static float FractionFor(ItemDrop.ItemData item)
         {
             float fraction;
+            ConfigEntry<float> entry;
+            if (item.m_dropPrefab != null && itemEntries.TryGetValue(item.m_dropPrefab.name.ToLowerInvariant(), out entry) && entry.Value >= 0f)
+                return entry.Value;
             if (overrides.Count > 0)
             {
                 if (item.m_dropPrefab != null && overrides.TryGetValue(item.m_dropPrefab.name.ToLowerInvariant(), out fraction)) return fraction;
@@ -191,6 +243,21 @@ namespace PortalToll
             }
             __result = true;
         }
+
+        // The item list is filled in stages (game, then other mods), so look again at each stage.
+        [HarmonyPatch(typeof(ObjectDB), "Awake")]
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.Last)]
+        private static void AfterObjectDBAwake() { Plugin.RegisterItemSettings(); }
+
+        [HarmonyPatch(typeof(ObjectDB), nameof(ObjectDB.CopyOtherDB))]
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.Last)]
+        private static void AfterCopyOtherDB() { Plugin.RegisterItemSettings(); }
+
+        [HarmonyPatch(typeof(Player), nameof(Player.OnSpawned))]
+        [HarmonyPostfix]
+        private static void AfterPlayerSpawned() { Plugin.RegisterItemSettings(); }
 
         [HarmonyPatch(typeof(TeleportWorld), nameof(TeleportWorld.Teleport))]
         [HarmonyPrefix]
